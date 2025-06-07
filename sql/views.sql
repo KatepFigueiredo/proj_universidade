@@ -58,8 +58,7 @@ SELECT
     a.titulo AS titulo_aula,
     a.hora_inicio,
     a.hora_fim,
-    up.nome AS professor_nome,
-    p.data_matricula
+    up.nome AS professor_nome
 FROM
     participacoes p
 JOIN

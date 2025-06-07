@@ -76,3 +76,10 @@ CREATE TABLE recomendacoes (
     FOREIGN KEY (id_material) REFERENCES materiais_didaticos(id) ON DELETE CASCADE,
     FOREIGN KEY (id_professor) REFERENCES utilizadores(id) ON DELETE SET NULL
 );
+
+CREATE TABLE professor_log_atividades (
+    id SERIAL PRIMARY KEY,
+    id_professor INT NOT NULL,
+    acao TEXT NOT NULL, -- Descrição da ação (ex: "Departamento atualizado...")
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

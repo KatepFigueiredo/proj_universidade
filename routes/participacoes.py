@@ -32,11 +32,10 @@ def matricular_estudante_na_aula(conn, current_user_id):
 @participacoes_bp.route("/meu-historico", methods=["GET"])
 @role_required(allowed_types=['estudante', 'professor'])
 def listar_minhas_aulas(conn, current_user_id):
-    id_estudante_para_consultar = current_user_id # Por simplicidade, o próprio usuário logado
+    id_estudante_para_consultar = current_user_id
 
     try:
         cur = conn.cursor()
-        # Chamar a view e filtrar no Flask
         cur.execute(
             """
             SELECT id_aula, data_aula, titulo_aula, hora_inicio, hora_fim, professor_nome
