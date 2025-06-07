@@ -1,0 +1,113 @@
+from flask import Blueprint, request, jsonify
+from decorators import role_required
+from db import db_connection
+import base64 # Para lidar com BYTEA
+from datetime import date
+
+materiais_bp = Blueprint('materiais', __name__, url_prefix="/materiais")
+
+@materiais_bp.route("/", methods=["POST"])
+@role_required(allowed_types=['professor'])
+def criar_material(conn, current_user_id):
+    data = request.json
+    titulo = data.get("titulo")
+    tipo = data.get("tipo")
+    autor = data.get("autor")
+    url = data.get("url")
+    conteudo_b64 = data.get("conteudo") # Conteúdo em Base64
+
+    if not all([titulo, tipo]):
+        return jsonify({"erro": "Título e tipo de material são obrigatórios."}), 400
+    
+    conteudo_bytea = None
+    if conteudo_b64:
+        try:
+            conteudo_bytea = base64.b64decode(conteudo_b64)
+        except Exception as e:
+            return jsonify({"erro": "Formato de conteúdo Base64 inválido."}), 400
+
+    try:
+        cur = conn.cursor()
+        # Chamar a função para criar material
+        cur.execute(
+            "SELECT criar_material_didatico_bd(%s, %s, %s, %s, %s);",
+            (titulo, tipo, autor, url, conteudo_bytea)
+        )
+        novo_material_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        return jsonify({"id": novo_material_id, "mensagem": "Material didático criado com sucesso."}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"erro": f"Erro ao criar material didático: {str(e)}"}), 500
+
+@materiais_bp.route("/recomendar", methods=["POST"])
+@role_required(allowed_types=['professor'])
+def recomendar_material_aula(conn, current_user_id):
+    data = request.json
+    id_aula = data.get("id_aula")
+    id_material = data.get("id_material")
+    nota = data.get("nota")
+    
+    id_professor = current_user_id
+
+    # Ajuste na validação: data_aula não é mais necessária no payload
+    if not all([id_aula, id_material]):
+        return jsonify({"erro": "ID da aula e ID do material são obrigatórios."}), 400
+    
+    try:
+        cur = conn.cursor()
+        # Chamar a função para recomendar material (agora sem data_aula)
+        cur.execute(
+            "SELECT recomendar_material_aula_bd(%s, %s, %s, %s);",
+            (id_aula, id_material, id_professor, nota)
+        )
+        novo_recomendacao_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        return jsonify({"id": novo_recomendacao_id, "mensagem": "Material recomendado com sucesso na aula."}), 201
+    except Exception as e:
+        conn.rollback()
+        if "duplicate key value violates unique constraint" in str(e):
+            # A mensagem de erro agora virá do raise exception da função se a aula não existir
+            return jsonify({"erro": "Este material já foi recomendado para esta aula."}), 409
+        return jsonify({"erro": f"Erro ao recomendar material: {str(e)}"}), 500
+
+@materiais_bp.route("/aula/<int:aula_id>/<string:data_aula_str>/recomendacoes", methods=["GET"])
+@role_required(allowed_types=['estudante', 'professor'])
+def listar_recomendacoes_por_aula(aula_id, data_aula_str, conn, current_user_id):
+    try:
+        data_aula = date.fromisoformat(data_aula_str)
+    except ValueError:
+        return jsonify({"erro": "Formato de data inválido. Use AAAA-MM-DD."}), 400
+
+    try:
+        cur = conn.cursor()
+        # Chamar a view e filtrar no Flask
+        cur.execute(
+            """
+            SELECT id, titulo_material, tipo_material, autor_material, url_material,
+            nota, data_recomendacao, professor_nome
+            FROM recomendacoes_detalhadas
+            WHERE id_aula = %s AND data_aula = %s
+            ORDER BY data_recomendacao DESC;
+            """,
+            (aula_id, data_aula)
+        )
+        recomendacoes = cur.fetchall()
+        cur.close()
+        
+        return jsonify([
+            {
+                "id": r[0],
+                "titulo_material": r[1],
+                "tipo_material": r[2],
+                "autor_material": r[3],
+                "url_material": r[4],
+                "nota": r[5],
+                "data_recomendacao": str(r[6]),
+                "professor_recomendou": r[7]
+            } for r in recomendacoes
+        ])
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao listar recomendações: {str(e)}"}), 500

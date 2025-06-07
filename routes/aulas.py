@@ -9,9 +9,7 @@ aulas_bp = Blueprint('aulas', __name__, url_prefix="/aulas")
 def listar_aulas(conn, current_user_id):
     try:
         cur = conn.cursor()
-        # A role_estudante terá apenas SELECT, e a role_professor terá SELECT, INSERT, UPDATE, DELETE
-        # A permissão é controlada pelo banco de dados através do SET ROLE
-        cur.execute("SELECT id, titulo, data, hora_inicio, hora_fim, id_professor FROM aulas ORDER BY data DESC;")
+        cur.execute("SELECT id, titulo, data, hora_inicio, hora_fim, id_professor FROM aulas_disponiveis;")
         aulas = cur.fetchall()
         cur.close()
         return jsonify([
@@ -30,18 +28,15 @@ def criar_aula(conn, current_user_id):
     hora_inicio = data.get("hora_inicio")
     hora_fim = data.get("hora_fim")
     
-    # O professor que está logado é o que está a criar a aula
-    id_professor = current_user_id 
+    id_professor = current_user_id
 
-    if not all([titulo, aula_data, hora_inicio, hora_fim]): # id_professor vem do token
+    if not all([titulo, aula_data, hora_inicio, hora_fim]):
         return jsonify({"erro": "Título, data, hora de início e hora de fim são obrigatórios."}), 400
     
     try:
         cur = conn.cursor()
-        # Esta inserção vai falhar se um 'estudante' tentar fazer,
-        # pois a role_estudante não tem privilégios de INSERT na tabela 'aulas'.
         cur.execute(
-            "INSERT INTO aulas (titulo, data, hora_inicio, hora_fim, id_professor) VALUES (%s, %s, %s, %s, %s) RETURNING id;",
+            "SELECT criar_aula_bd(%s, %s, %s, %s, %s);",
             (titulo, aula_data, hora_inicio, hora_fim, id_professor)
         )
         novo_aula_id = cur.fetchone()[0]
@@ -49,7 +44,7 @@ def criar_aula(conn, current_user_id):
         cur.close()
         return jsonify({"id": novo_aula_id, "mensagem": "Aula criada com sucesso."}), 201
     except Exception as e:
-        conn.rollback() # Em caso de erro, desfaz a transação
+        conn.rollback()
         return jsonify({"erro": f"Erro ao criar aula: {str(e)}"}), 500
 
 # Exemplo de rota para atualizar uma aula (apenas professores)

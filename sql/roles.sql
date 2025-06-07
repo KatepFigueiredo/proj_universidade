@@ -22,8 +22,6 @@ CREATE USER app_user WITH PASSWORD 'xoN924kot';
 GRANT role_estudante TO app_user;
 GRANT role_professor TO app_user;
 
-
-
 -- Conceder permissão de USAGE na sequência de utilizadores_id_seq para role_professor
 GRANT USAGE ON SEQUENCE utilizadores_id_seq TO role_professor;
 
