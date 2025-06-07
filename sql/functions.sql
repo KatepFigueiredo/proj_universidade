@@ -25,12 +25,16 @@ $$ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION procurar_utilizador_por_email(p_email TEXT)
-RETURNS TABLE (id INT, password TEXT, tipo_utilizador TEXT)
+RETURNS TABLE (
+    user_id INT,
+    user_password TEXT,
+    user_tipo_utilizador VARCHAR(20)
+)
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT id, password, tipo_utilizador
-    FROM utilizadores
-    WHERE email = p_email;
+    SELECT u.id, u.password, u.tipo_utilizador
+    FROM utilizadores u
+    WHERE u.email = p_email;
 END;
 $$ LANGUAGE plpgsql;
