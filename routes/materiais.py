@@ -9,29 +9,39 @@ materiais_bp = Blueprint('materiais', __name__, url_prefix="/materiais")
 @materiais_bp.route("/", methods=["POST"])
 @role_required(allowed_types=['professor'])
 def criar_material(conn, current_user_id):
-    data = request.json
-    titulo = data.get("titulo")
-    tipo = data.get("tipo")
-    autor = data.get("autor")
-    url = data.get("url")
-    conteudo_b64 = data.get("conteudo") # Conteúdo em Base64
+    # --- ALTERAÇÃO AQUI: Em vez de request.json, use request.form para campos de texto ---
+    titulo = request.form.get("titulo")
+    tipo = request.form.get("tipo")
+    autor = request.form.get("autor")
+    url = request.form.get("url")
+    
+    # --- E aqui para o ficheiro binário, use request.files ---
+    conteudo_file = request.files.get("conteudo") # Pega o objeto FileStorage do ficheiro
 
     if not all([titulo, tipo]):
         return jsonify({"erro": "Título e tipo de material são obrigatórios."}), 400
     
     conteudo_bytea = None
-    if conteudo_b64:
+    if conteudo_file:
         try:
-            conteudo_bytea = base64.b64decode(conteudo_b64)
+            # LER O CONTEÚDO BINÁRIO DO FICHEIRO
+            conteudo_bytea = conteudo_file.read()
+            
+            # Opcional: Pode adicionar validação de tipo de ficheiro (mimetype) se for relevante
+            # if conteudo_file.mimetype not in ['image/jpeg', 'image/png', 'application/pdf']:
+            #     return jsonify({"erro": "Tipo de ficheiro não suportado. Apenas imagens (JPEG, PNG) e PDFs são permitidos."}), 400
+
         except Exception as e:
-            return jsonify({"erro": "Formato de conteúdo Base64 inválido."}), 400
+            # Capturar erros na leitura do ficheiro
+            return jsonify({"erro": f"Erro ao ler o ficheiro de conteúdo: {str(e)}"}), 400
 
     try:
         cur = conn.cursor()
         # Chamar a função para criar material
+        # O driver do PostgreSQL (psycopg2) saberá como lidar com os bytes Python para o tipo BYTEA do PostgreSQL
         cur.execute(
             "SELECT criar_material_didatico_bd(%s, %s, %s, %s, %s);",
-            (titulo, tipo, autor, url, conteudo_bytea)
+            (titulo, tipo, autor, url, conteudo_bytea) # Passa os bytes brutos lidos do ficheiro
         )
         novo_material_id = cur.fetchone()[0]
         conn.commit()
@@ -40,7 +50,7 @@ def criar_material(conn, current_user_id):
     except Exception as e:
         conn.rollback()
         return jsonify({"erro": f"Erro ao criar material didático: {str(e)}"}), 500
-
+    
 @materiais_bp.route("/recomendar", methods=["POST"])
 @role_required(allowed_types=['professor'])
 def recomendar_material_aula(conn, current_user_id):

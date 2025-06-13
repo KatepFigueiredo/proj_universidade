@@ -2,9 +2,9 @@ from flask import Blueprint, request, jsonify
 from decorators import role_required
 from db import db_connection
 
-professors_bp = Blueprint('professors', __name__, url_prefix="/professors")
+professores_bp = Blueprint('professors', __name__, url_prefix="/professors")
 
-@professors_bp.route("/", methods=["GET"])
+@professores_bp.route("/", methods=["GET"])
 @role_required(allowed_types=['estudante', 'professor'])
 def listar_professores(conn, current_user_id):
     try:
@@ -19,10 +19,14 @@ def listar_professores(conn, current_user_id):
     except Exception as e:
         return jsonify({"erro": f"Erro ao listar professores: {str(e)}"}), 500
 
-@professors_bp.route("/<int:professor_id>/profile", methods=["PUT"])
+@professores_bp.route("/<int:professor_id>/profile", methods=["PUT"])
 @role_required(allowed_types=['professor'])
 def atualizar_perfil_professor(professor_id, conn, current_user_id):
-    if professor_id != current_user_id:
+    
+    professor_id_int = int(professor_id)
+    current_user_id_int = int(current_user_id) # current_user_id vem como string do get_jwt_identity() por padrão
+
+    if professor_id_int != current_user_id_int:
         return jsonify({"erro": "Não tem permissão para atualizar este perfil."}), 403
 
     data = request.json
