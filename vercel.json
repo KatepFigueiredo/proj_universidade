@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.10"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "wsgi.py"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": "SECRET_KEY",
+    "DB_NAME": "DB_NAME",
+    "DB_USER": "DB_USER",
+    "DB_PASSWORD": "DB_PASSWORD",
+    "DB_HOST": "DB_HOST",
+    "DB_PORT": "DB_PORT"
+  }
+}
