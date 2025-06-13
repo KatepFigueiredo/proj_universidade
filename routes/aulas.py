@@ -57,12 +57,6 @@ def atualizar_aula(aula_id, conn, current_user_id):
     hora_inicio = data.get("hora_inicio")
     hora_fim = data.get("hora_fim")
 
-    # Opcional: Adicionar verificação para garantir que o professor só edita as suas próprias aulas
-    # cur.execute("SELECT id_professor FROM aulas WHERE id = %s;", (aula_id,))
-    # professor_aula = cur.fetchone()
-    # if professor_aula and professor_aula[0] != current_user_id:
-    #    return jsonify({"erro": "Não tem permissão para editar esta aula."}), 403
-
     update_fields = []
     update_values = []
 

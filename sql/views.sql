@@ -1,4 +1,4 @@
--- View que exibe as aulas disponíveis ordenadas por data.
+-- View que exibe as aulas disponíveis
 
 CREATE OR REPLACE VIEW aulas_disponiveis AS
 SELECT
@@ -29,8 +29,7 @@ WHERE
 ORDER BY
     u.nome;
 
--- View para listar recomendações de uma aula (usando parâmetros como filtros no SELECT no Flask)
--- Esta view lista todas as recomendações e a filtragem será feita no Flask para ter flexibilidade
+-- View para listar recomendações de uma aula
 CREATE OR REPLACE VIEW recomendacoes_detalhadas AS
 SELECT
     r.id,

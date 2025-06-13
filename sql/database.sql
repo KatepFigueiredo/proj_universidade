@@ -1,4 +1,3 @@
--- Tabela unificada de Utilizadores
 CREATE TABLE utilizadores (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -8,19 +7,16 @@ CREATE TABLE utilizadores (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de dados adicionais dos professores
 CREATE TABLE professores_info (
     id_utilizador INT PRIMARY KEY REFERENCES utilizadores(id) ON DELETE CASCADE,
     area_especializacao VARCHAR(100)
 );
 
--- Tabela de dados adicionais dos estudantes
 CREATE TABLE estudantes_info (
     id_utilizador INT PRIMARY KEY REFERENCES utilizadores(id) ON DELETE CASCADE,
     data_nascimento DATE
 );
 
--- Tabela de Aulas com partição por data
 CREATE TABLE aulas (
     id SERIAL,
     titulo VARCHAR(100) NOT NULL,
@@ -32,7 +28,6 @@ CREATE TABLE aulas (
     FOREIGN KEY (id_professor) REFERENCES utilizadores(id) ON DELETE CASCADE
 ) PARTITION BY RANGE (data);
 
--- Partições
 CREATE TABLE aulas_2024 PARTITION OF aulas
     FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
 
@@ -42,8 +37,6 @@ CREATE TABLE aulas_2025 PARTITION OF aulas
 CREATE TABLE aulas_2026 PARTITION OF aulas
     FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
 
--- Tabela associativa: Estudantes que assistiram a Aulas
--- Agora inclui a coluna data para referenciar corretamente a tabela particionada
 CREATE TABLE participacoes (
     id_estudante INT,
     id_aula INT,
@@ -53,7 +46,6 @@ CREATE TABLE participacoes (
     FOREIGN KEY (id_aula, data_aula) REFERENCES aulas(id, data) ON DELETE CASCADE
 );
 
--- Tabela de Materiais Didáticos
 CREATE TABLE materiais_didaticos (
     id SERIAL PRIMARY KEY,
     titulo VARCHAR(150) NOT NULL,
@@ -63,8 +55,6 @@ CREATE TABLE materiais_didaticos (
 	conteudo BYTEA
 );
 
--- Recomendações de materiais
--- Também inclui data_aula para referenciar corretamente a tabela particionada
 CREATE TABLE recomendacoes (
     id SERIAL PRIMARY KEY,
     id_aula INT NOT NULL,
@@ -80,6 +70,6 @@ CREATE TABLE recomendacoes (
 CREATE TABLE professor_log_atividades (
     id SERIAL PRIMARY KEY,
     id_professor INT NOT NULL,
-    acao TEXT NOT NULL, -- Descrição da ação (ex: "Departamento atualizado...")
+    acao TEXT NOT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

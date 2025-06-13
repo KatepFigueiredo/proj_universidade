@@ -6,6 +6,15 @@ CREATE ROLE role_professor NOLOGIN;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO role_estudante;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO role_professor;
 
+-- 4. Criação do utilizador da aplicação
+CREATE USER app_user WITH PASSWORD 'xoN924kot';
+
+-- 5. Atribuição das nossas roles ao utilizador da aplicação
+GRANT role_estudante TO app_user;
+GRANT role_professor TO app_user;
+
+GRANT app_user TO a2020153106;
+
 -- 3. Definir ALTER DEFAULT PRIVILEGES para OBJETOS FUTUROS
 
 ALTER DEFAULT PRIVILEGES FOR ROLE app_user IN SCHEMA public
@@ -25,9 +34,3 @@ GRANT EXECUTE ON FUNCTIONS TO role_estudante;
 ALTER DEFAULT PRIVILEGES FOR ROLE app_user IN SCHEMA public
 GRANT EXECUTE ON FUNCTIONS TO role_professor;
 
--- 4. Criação do utilizador da aplicação
-CREATE USER app_user WITH PASSWORD 'xoN924kot';
-
--- 5. Atribuição das nossas roles ao utilizador da aplicação
-GRANT role_estudante TO app_user;
-GRANT role_professor TO app_user;
